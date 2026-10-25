@@ -43,6 +43,10 @@ td.cb,th.cb{width:34px;text-align:center;padding-left:4px;padding-right:4px}td.c
 tr.done td{background:#effaf2}tr.skip td{background:#f4f5f8;color:#9aa1b0}tr.skip td:not(.cb) *{opacity:.6}td.cb.sk input{accent-color:#6b7385}tr.done td:nth-child(2){font-weight:700}
 .ev.dn_{box-shadow:inset 3px 0 0 #16a34a}
 @media(max-width:800px){.kpis{grid-template-columns:repeat(2,1fr)}.row2{grid-template-columns:1fr}.cell{min-height:70px}.ev{font-size:9px}}
+
+.nxr{display:grid;grid-template-columns:auto auto 1fr auto;gap:2px 8px;align-items:center;padding:5px 0;border-top:1px solid #f0f1f4;font-size:12.5px}.kpi .l+.nxr{border-top:0;margin-top:4px}.nxr .nm{font-weight:800;font-size:14.5px}.nxr .dp{font-weight:800;text-align:right;white-space:nowrap}.nxr .bk{color:#6b7385;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#nxbox{margin-bottom:14px}#nxbox h3{margin:0 0 8px;font-size:15px;display:flex;align-items:baseline;gap:8px;flex-wrap:wrap}#nxbox h3 span{font-size:12px;color:#8a92a5;font-weight:400}
+.nxt{width:100%;border-collapse:collapse;font-size:13px}.nxt th{font-size:11.5px;color:#6b7385;font-weight:600;text-align:left;padding:6px 8px;border-bottom:1px solid #e8eaef;background:#f6f7fa;white-space:nowrap}.nxt td{padding:8px;border-bottom:1px solid #f2f3f6;white-space:nowrap}.nxt tr:last-child td{border-bottom:0}.nxt .r{text-align:right}.nxt .nm{font-weight:800}.nxt .q{color:#9aa1ab}.nxt .dd{display:inline-block;font-size:11px;font-weight:800;color:#2563eb;background:#eaf1fe;border-radius:5px;padding:0 6px;margin-left:4px}.nxt tr.now td{background:#fffbea}.nxt tr.now .dd{color:#b45309;background:#fde68a}
 </style></head><body><div class="wrap">
 <h1>2026 공모주 대시보드</h1><div class="sub">1월~12월 청약 · 환불 · 상장 일정 (코스닥/유가) · 데이터 기준일 2026-10-25</div>
 <div class="kpis" id="kpi"></div>
@@ -96,7 +100,15 @@ function kpi(){const g=D.filter(r=>!r.sp),sp=D.length-g.length;
  const dday=up?Math.round((new Date(up.s[0])-new Date(TODAY))/864e5):null;
  $("kpi").innerHTML=[["연간 일반 공모",g.length+"건","스팩 "+sp+"건 별도"],["이번 달("+CM+"월) 청약",mo+"건","상장 완료 "+g.filter(r=>r.l&&r.l<=TODAY).length+"건(연간)"],
  ["다음 청약",up?up.n:"-",up?up.s[0].slice(5).replace("-","/")+" 시작 ("+(dday>0?"D-"+dday:"진행 중")+")":""],[NM+"월 청약 예정",g.filter(r=>r.s[0].startsWith("2026-"+P2(NM))).length+"건",NM2>NM?NM2+"월 "+g.filter(r=>r.s[0].startsWith("2026-"+P2(NM2))).length+"건 공시":""]]
- .map(x=>'<div class="card kpi"><div class="l">'+x[0]+'</div><div class="v">'+x[1]+'</div><div class="s">'+x[2]+'</div></div>').join("")}
+ .map(x=>'<div class="card kpi"><div class="l">'+x[0]+'</div><div class="v">'+x[1]+'</div><div class="s">'+x[2]+'</div></div>').join("");nextUp()}
+function nextUp(){const up=D.filter(r=>r.s[1]>=TODAY&&!r.sp).sort((a,b)=>a.s[0].localeCompare(b.s[0]));let box=$("nxbox");
+ if(!box){box=document.createElement("div");box.className="card";box.id="nxbox";$("kpi").parentNode.insertBefore(box,$("kpi").nextSibling);}
+ if(!up.length){box.style.display="none";return;}box.style.display="";
+ const md=s=>s.slice(5).replace("-","/"),dd=r=>{const n=Math.round((new Date(r.s[0])-new Date(TODAY))/864e5);return n>0?"D-"+n:"진행 중"};
+ const kq=r=>r.kq&&r.kq.length?r.kq:[[r.k[0],r.q]],d0=up[0].s[0],L=up.filter(r=>r.s[0]===d0);
+ const c=$("kpi").children[2];if(c)c.innerHTML='<div class="l">다음 청약 · '+md(d0)+' 시작 ('+dd(up[0])+')</div>'+L.slice(0,3).map(r=>'<div class="nxr"><span class="nm">'+r.n+'</span>'+badge(r)+'<span class="bk">'+kq(r).map(b=>b[0].replace(/투자증권|증권/,"")).join("·")+'</span><span class="dp">'+kq(r).map(b=>man(r.p*b[1]/2)).join(" / ")+'</span></div>').join("")+(L.length>3?'<div class="s">외 '+(L.length-3)+'종목 · 아래 표 참고</div>':'');
+ box.innerHTML='<h3>다가오는 청약<span>가장 가까운 날(노란 줄) 포함 6종목 · 최소 증거금 = 공모가 x 최소 수량 x 50%</span></h3><div class="tw"><table class="nxt"><thead><tr><th>청약일</th><th>종목</th><th>점수</th><th>증권사</th><th class="r">최소 증거금</th></tr></thead><tbody>'+
+  up.slice(0,6).map(r=>'<tr'+(r.s[0]===d0?' class="now"':'')+'><td>'+md(r.s[0])+'~'+md(r.s[1])+'<span class="dd">'+dd(r)+'</span></td><td class="nm">'+r.n+'</td><td>'+badge(r)+'</td><td>'+kq(r).map(b=>b[0]).join(", ")+'</td><td class="r"><b>'+kq(r).map(b=>man(r.p*b[1]/2)).join(" / ")+'</b> <span class="q">('+kq(r).map(b=>b[1]+"주").join("/")+')</span></td></tr>').join("")+'</tbody></table></div>'}
 function charts(){const v=vis();const c=Array.from({length:13},()=>[0,0]);v.forEach(r=>{c[+r.s[0].slice(5,7)][r.sp?1:0]++});
  const mx=Math.max(...c.map(x=>x[0]+x[1]),1);
  $("bars").innerHTML=c.slice(1).map((x,i)=>'<div class="bar '+(i+1===M?"sel":"")+'" onclick="go('+(i+1)+')"><div class="n">'+(x[0]+x[1])+'</div><div class="stk" style="height:'+((x[0]+x[1])/mx*105)+'px"><div class="g" style="height:'+(x[0]/(x[0]+x[1]||1)*100)+'%"></div><div class="sp" style="height:'+(x[1]/(x[0]+x[1]||1)*100)+'%"></div></div><div class="m">'+(i+1)+'월</div></div>').join("");
