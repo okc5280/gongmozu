@@ -40,7 +40,7 @@ a.sl{color:inherit;text-decoration:none;border-bottom:1px dotted #99a}
 @media(max-width:800px){.tier{grid-template-columns:repeat(2,1fr)}}
 td.ds{white-space:normal;min-width:180px;max-width:260px;color:#5b6375;font-size:11.5px;line-height:1.35}
 td.cb,th.cb{width:34px;text-align:center;padding-left:4px;padding-right:4px}td.cb input{width:16px;height:16px;cursor:pointer;accent-color:#16a34a}
-tr.done td{background:#effaf2}tr.skip td{background:#f4f5f8;color:#9aa1b0}tr.skip td:not(.cb) *{opacity:.6}td.cb.sk input{accent-color:#6b7385}tr.done td:nth-child(2){font-weight:700}
+tr.done td{background:#effaf2}tr.skip td{background:#f4f5f8;color:#c3c8d2}tr.skip td:not(.cb){opacity:.35}tr.skip td:not(.cb) a{color:#c3c8d2!important}tr.skip td .sc{filter:grayscale(1)}td.cb.sk input{accent-color:#6b7385}tr.done td:nth-child(2){font-weight:700}
 .ev.dn_{box-shadow:inset 3px 0 0 #16a34a}
 @media(max-width:800px){.kpis{grid-template-columns:repeat(2,1fr)}.row2{grid-template-columns:1fr}.cell{min-height:70px}.ev{font-size:9px}}
 
@@ -55,6 +55,8 @@ tr.done td{background:#effaf2}tr.skip td{background:#f4f5f8;color:#9aa1b0}tr.ski
 .scx{display:inline-block;min-width:22px;text-align:center;font-size:10.5px;font-weight:800;border-radius:5px;padding:0 4px;color:#fff;flex-shrink:0}.scx.s80{background:#16a34a}.scx.s65{background:#2563eb}.scx.s50{background:#f59e0b}.scx.s0{background:#e0262d}.scx.sna{background:#c3c8d2}
 #ctip{position:fixed;z-index:50;display:none;pointer-events:none;background:#fff;border:1px solid #d6d9de;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.16);padding:10px 12px;font-size:12.5px;min-width:230px;max-width:330px}#ctip .tn{font-size:15px;font-weight:800;margin-bottom:2px}#ctip .td{color:#6b7385;font-size:12px;margin-bottom:6px}#ctip .tl{color:#374151;margin:4px 0}#ctip .tl span{color:#9aa1ab}#ctip table{width:100%;border-collapse:collapse;margin:6px 0 2px}#ctip th{font-size:11px;color:#8a92a5;font-weight:600;text-align:left;padding:3px 4px;border-bottom:1px solid #eceef1}#ctip td{padding:4px;border-bottom:1px solid #f4f5f7;white-space:nowrap}#ctip td:last-child,#ctip th:last-child{text-align:right}
 @media(max-width:700px){.cell .tr{font-size:10px}.cell .tr .tg{font-size:9px}}
+
+td.scc{text-align:center;width:1%;white-space:nowrap}
 </style></head><body><div class="wrap">
 <h1>2026 공모주 대시보드</h1><div class="sub">1월~12월 청약 · 환불 · 상장 일정 (코스닥/유가) · 데이터 기준일 2026-10-25</div>
 <div class="kpis" id="kpi"></div>
@@ -149,8 +151,8 @@ function tipHtml(r){const md=s=>s?(+s.slice(5,7))+"/"+(+s.slice(8,10)):"-",kq=r.
 const f=s=>s?s.slice(5).replace("-","/"):"-";
 function tbl(){const v=vis().filter(r=>!M||+r.s[0].slice(5,7)===M);
  $("tt").textContent=(M?M+"월":"연간 전체")+" 종목 ("+v.length+"건 · 참여 "+v.filter(r=>DONE.has(r.n)).length+"건 · 비참여 "+v.filter(r=>SKIP.has(r.n)).length+"건)";
- $("tbl").innerHTML="<tr><th class=\"cb\" title=\"청약 참여 표시\">참여</th><th class=\"cb\" title=\"체크하면 달력에서 숨김\">비참여</th><th>종목</th><th>기업 설명</th><th>160 매력지수</th><th>청약</th><th>청약 증권사</th><th>최소 수량</th><th>최소 증거금</th><th>공모가</th><th>환불</th><th>상장</th><th>시초가</th><th>상장일 종가</th></tr>"+
- v.map(r=>"<tr class=\""+(DONE.has(r.n)?"done":SKIP.has(r.n)?"skip":"")+"\"><td class=\"cb\"><input type=\"checkbox\" title=\"청약 참여\" "+(DONE.has(r.n)?"checked":"")+" onchange=\"tog('"+r.n+"',this)\"></td><td class=\"cb sk\"><input type=\"checkbox\" title=\"비참여(달력에서 숨김)\" "+(SKIP.has(r.n)?"checked":"")+" onchange=\"togS('"+r.n+"',this)\"></td><td>"+(r.cd?'<a class="sl" target="_blank" href="https://metalogos.ai/160ipo/stock/'+r.cd+'">'+r.n+'</a>':r.n)+(r.sp?'<span class="tag">스팩</span>':"")+"</td><td class=\"ds\">"+(r.d||"-")+"</td><td>"+badge(r)+"</td><td>"+f(r.s[0])+"~"+f(r.s[1])+"</td><td>"+r.k.join(" · ")+"</td><td>"+qDetail(r)+"</td><td>"+mTxt(r)+"</td><td>"+r.p.toLocaleString()+"원"+(r.pf?"":'<span class="tag">상단</span>')+"</td><td>"+f(r.r)+(r.re?'<span class="tag">추정</span>':"")+"</td><td>"+(r.l?f(r.l):"미정")+"</td><td>"+pct(r.o)+"</td><td>"+pct(r.c)+"</td></tr>").join("")}
+ $("tbl").innerHTML="<tr><th class=\"cb\" title=\"청약 참여 표시\">참여</th><th class=\"cb\" title=\"체크하면 달력에서 숨김\">비참여</th><th>160 매력지수</th><th>종목</th><th>기업 설명</th><th>청약</th><th>청약 증권사</th><th>최소 수량</th><th>최소 증거금</th><th>공모가</th><th>환불</th><th>상장</th><th>시초가</th><th>상장일 종가</th></tr>"+
+ v.map(r=>"<tr class=\""+(DONE.has(r.n)?"done":SKIP.has(r.n)?"skip":"")+"\"><td class=\"cb\"><input type=\"checkbox\" title=\"청약 참여\" "+(DONE.has(r.n)?"checked":"")+" onchange=\"tog('"+r.n+"',this)\"></td><td class=\"cb sk\"><input type=\"checkbox\" title=\"비참여(달력에서 숨김)\" "+(SKIP.has(r.n)?"checked":"")+" onchange=\"togS('"+r.n+"',this)\"></td><td class=\"scc\">"+badge(r)+"</td><td>"+(r.cd?'<a class="sl" target="_blank" href="https://metalogos.ai/160ipo/stock/'+r.cd+'">'+r.n+'</a>':r.n)+(r.sp?'<span class="tag">스팩</span>':"")+"</td><td class=\"ds\">"+(r.d||"-")+"</td><td>"+f(r.s[0])+"~"+f(r.s[1])+"</td><td>"+r.k.join(" · ")+"</td><td>"+qDetail(r)+"</td><td>"+mTxt(r)+"</td><td>"+r.p.toLocaleString()+"원"+(r.pf?"":'<span class="tag">상단</span>')+"</td><td>"+f(r.r)+(r.re?'<span class="tag">추정</span>':"")+"</td><td>"+(r.l?f(r.l):"미정")+"</td><td>"+pct(r.o)+"</td><td>"+pct(r.c)+"</td></tr>").join("")}
 function draw(){kpi();charts();tier();tabs();cal();tbl()}
 function go(m){M=m;draw()}function setB(k){BK=BK===k?"전체":k;draw()}
 ["fSub","fRef","fLst","fSpac","fSc"].forEach(i=>$(i).onchange=draw);$("fBrk").onchange=e=>{BK=e.target.value;draw()};
