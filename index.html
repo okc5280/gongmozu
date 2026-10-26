@@ -98,12 +98,10 @@ const stOf=n=>REF.has(n)?"rf":DONE.has(n)?"in":SKIP.has(n)?"no":"";
 function setSt(i,k){const n=D[i].n;const cur=DONE.has(n)?"in":SKIP.has(n)?"no":"";DONE.delete(n);SKIP.delete(n);REF.delete(n);if(cur!==k){if(k==="in")DONE.add(n);else if(k==="no"){SKIP.add(n);delete BRK[n]}}save();draw()}
 function setBk(i,b,el){const n=D[i].n;let a=(BRK[n]||[]).filter(x=>x!==b);if(el.checked){a.push(b);DONE.add(n);SKIP.delete(n)}if(a.length)BRK[n]=a;else delete BRK[n];save();draw()}
 const bkCell=r=>{if(r.k.length<2)return r.k.join(" · ");const on=BRK[r.n]||[];return '<div class="bkc">'+r.k.map(b=>'<label class="'+(on.includes(b)?"on":"")+'"><input type="checkbox" '+(on.includes(b)?"checked":"")+(SKIP.has(r.n)?" disabled":"")+' onchange="setBk('+D.indexOf(r)+',\''+b+'\',this)">'+b+'</label>').join("")+'</div>'};
-function setAl(i,j,d){const r=D[i],b=r.k[j],a=ALC[r.n]||(ALC[r.n]={});a[b]=Math.max(0,(a[b]||0)+d);if(!a[b])delete a[b];if(!Object.keys(a).length)delete ALC[r.n];save();draw()}
-const alCell=r=>{if(!DONE.has(r.n))return '<span class="ald">-</span>';const multi=r.k.length>1,on=BRK[r.n]||[],a=ALC[r.n]||{},i=D.indexOf(r);let tot=0,any=false;
- const rows=r.k.map((b,j)=>{const show=!multi||on.includes(b);if(!show)return '<div class="alr" style="visibility:hidden"><span class="stp"><b>0</b><span class="ud"><i>▲</i><i>▼</i></span></span></div>';any=true;const q=a[b]||0;tot+=q;
-  return '<div class="alr"><span class="stp'+(q?'':' z')+'"><b>'+q+'</b><span class="ud"><i onclick="setAl('+i+','+j+',1)" title="1주 늘리기">▲</i><i onclick="setAl('+i+','+j+',-1)" title="1주 줄이기">▼</i></span></span><span class="un">주</span></div>'}).join("");
- if(!any)return '<span class="ald" title="청약 증권사를 체크하세요">증권사 체크</span>';
- return '<div class="alw">'+rows+'</div>'+(tot?'<div class="als">합계 '+tot+'주'+(r.o!=null?' · 시초가 <span class="'+(r.o>=0?"up":"dn")+'">'+(r.o>=0?"+":"")+Math.round(tot*r.p*r.o/100).toLocaleString()+'원</span>':'')+'</div>':'<div class="als z">미배정</div>')};
+function setAl(i,d){const n=D[i].n,q=Math.max(0,alQ(n)+d);if(q)ALC[n]=q;else delete ALC[n];save();draw()}
+const alQ=n=>{const v=ALC[n];return typeof v==="number"?v:v&&typeof v==="object"?Object.values(v).reduce((s,x)=>s+(+x||0),0):0};
+const alCell=r=>{if(!DONE.has(r.n))return '<span class="ald">-</span>';const q=alQ(r.n),i=D.indexOf(r);
+ return '<div class="alr"><span class="stp'+(q?'':' z')+'"><b>'+q+'</b><span class="ud"><i onclick="setAl('+i+',1)" title="1주 늘리기">▲</i><i onclick="setAl('+i+',-1)" title="1주 줄이기">▼</i></span></span><span class="un">주</span></div>'};
 function setRf(i,el){const n=D[i].n;if(el.checked){REF.add(n);DONE.add(n);SKIP.delete(n)}else REF.delete(n);save();draw()}
 const stRank=n=>({in:0,rf:0,"":2,no:3})[stOf(n)];
 function tog(n,el){if(el.checked){DONE.add(n);SKIP.delete(n)}else DONE.delete(n);save();draw()}
