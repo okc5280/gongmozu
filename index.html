@@ -62,6 +62,7 @@ th.seg{text-align:center}td.seg{width:1%!important;white-space:nowrap;text-align
 .sg.in.on{background:#16a34a;color:#fff;border-color:#16a34a}.sg.no.on{background:#6b7385;color:#fff;border-color:#6b7385}.sg.rf.on{background:#2563eb;color:#fff;border-color:#2563eb}
 td.rfd label{display:inline-flex;align-items:center;gap:5px;cursor:pointer}td.rfd input{width:15px;height:15px;margin:0;cursor:pointer;accent-color:#2563eb}td.rfd input:disabled{opacity:.3;cursor:not-allowed}tr.done.rf td.rfd{color:#2563eb;font-weight:700}
 tr.done.rf td{background:#f3f7ff}tr.done.rf td:not(.cb){color:#6b7385}
+.bkc label{display:flex;align-items:center;gap:5px;white-space:nowrap;cursor:pointer;line-height:1.7}.bkc input{margin:0;cursor:pointer}.bkc label.on{font-weight:700;color:#15803d}
 </style></head><body><div class="wrap">
 <h1>2026 공모주 대시보드</h1><div class="sub">1월~12월 청약 · 환불 · 상장 일정 (코스닥/유가) · 데이터 기준일 2026-10-25</div>
 <div class="kpis" id="kpi"></div>
@@ -87,9 +88,12 @@ const D=[{"n":"삼성스팩13호","k":["삼성증권"],"s":["2026-01-12","2026-0
 const DK="gongmozu_done";let DONE=new Set();try{DONE=new Set(JSON.parse(localStorage.getItem(DK)||"[]"))}catch(e){}
 const SK="gongmozu_skip";let SKIP=new Set();try{SKIP=new Set(JSON.parse(localStorage.getItem(SK)||"[]"))}catch(e){}
 const RK="gongmozu_refund";let REF=new Set();try{REF=new Set(JSON.parse(localStorage.getItem(RK)||"[]"))}catch(e){}
-function save(){try{localStorage.setItem(DK,JSON.stringify([...DONE]));localStorage.setItem(SK,JSON.stringify([...SKIP]));localStorage.setItem(RK,JSON.stringify([...REF]))}catch(e){}}
+const BKK="gongmozu_brk";let BRK={};try{BRK=JSON.parse(localStorage.getItem(BKK)||"{}")||{}}catch(e){}
+function save(){try{localStorage.setItem(BKK,JSON.stringify(BRK));localStorage.setItem(DK,JSON.stringify([...DONE]));localStorage.setItem(SK,JSON.stringify([...SKIP]));localStorage.setItem(RK,JSON.stringify([...REF]))}catch(e){}}
 const stOf=n=>REF.has(n)?"rf":DONE.has(n)?"in":SKIP.has(n)?"no":"";
-function setSt(i,k){const n=D[i].n;const cur=DONE.has(n)?"in":SKIP.has(n)?"no":"";DONE.delete(n);SKIP.delete(n);REF.delete(n);if(cur!==k){if(k==="in")DONE.add(n);else if(k==="no")SKIP.add(n)}save();draw()}
+function setSt(i,k){const n=D[i].n;const cur=DONE.has(n)?"in":SKIP.has(n)?"no":"";DONE.delete(n);SKIP.delete(n);REF.delete(n);if(cur!==k){if(k==="in")DONE.add(n);else if(k==="no"){SKIP.add(n);delete BRK[n]}}save();draw()}
+function setBk(i,b,el){const n=D[i].n;let a=(BRK[n]||[]).filter(x=>x!==b);if(el.checked){a.push(b);DONE.add(n);SKIP.delete(n)}if(a.length)BRK[n]=a;else delete BRK[n];save();draw()}
+const bkCell=r=>{if(r.k.length<2)return r.k.join(" · ");const on=BRK[r.n]||[];return '<div class="bkc">'+r.k.map(b=>'<label class="'+(on.includes(b)?"on":"")+'"><input type="checkbox" '+(on.includes(b)?"checked":"")+(SKIP.has(r.n)?" disabled":"")+' onchange="setBk('+D.indexOf(r)+',\''+b+'\',this)">'+b+'</label>').join("")+'</div>'};
 function setRf(i,el){const n=D[i].n;if(el.checked){REF.add(n);DONE.add(n);SKIP.delete(n)}else REF.delete(n);save();draw()}
 const stRank=n=>({in:0,rf:0,"":2,no:3})[stOf(n)];
 function tog(n,el){if(el.checked){DONE.add(n);SKIP.delete(n)}else DONE.delete(n);save();draw()}
@@ -162,7 +166,7 @@ const f=s=>s?s.slice(5).replace("-","/"):"-";
 function tbl(){const v=vis().filter(r=>!M||+r.s[0].slice(5,7)===M).map((r,j)=>[r,j]).sort((a,b)=>stRank(a[0].n)-stRank(b[0].n)||a[1]-b[1]).map(x=>x[0]);
  $("tt").textContent=(M?M+"월":"연간 전체")+" 종목 ("+v.length+"건 · 참여 "+v.filter(r=>DONE.has(r.n)&&!REF.has(r.n)).length+"건 · 환불 완료 "+v.filter(r=>REF.has(r.n)).length+"건 · 비참여 "+v.filter(r=>SKIP.has(r.n)).length+"건)";
  $("tbl").innerHTML="<tr><th class=\"seg\" title=\"참여 / 비참여(달력에서 숨김). 다시 누르면 해제\">내 상태</th><th>160 매력지수</th><th>종목</th><th>기업 설명</th><th>청약</th><th>청약 증권사</th><th>최소 수량</th><th>최소 증거금</th><th>공모가</th><th>환불</th><th>상장</th><th>시초가</th><th>상장일 종가</th></tr>"+
- v.map(r=>"<tr class=\""+(REF.has(r.n)?"done rf":DONE.has(r.n)?"done":SKIP.has(r.n)?"skip":"")+"\"><td class=\"cb seg\">"+[["in","참여"],["no","비참여"]].map(x=>'<span class="sg '+x[0]+((x[0]==="in"?DONE.has(r.n):SKIP.has(r.n))?" on":"")+'" onclick="setSt('+D.indexOf(r)+',\''+x[0]+'\')">'+x[1]+'</span>').join("")+"</td><td class=\"scc\">"+badge(r)+"</td><td>"+(r.cd?'<a class="sl" target="_blank" href="https://metalogos.ai/160ipo/stock/'+r.cd+'">'+r.n+'</a>':r.n)+(r.sp?'<span class="tag">스팩</span>':"")+"</td><td class=\"ds\">"+(r.d||"-")+"</td><td>"+f(r.s[0])+"~"+f(r.s[1])+"</td><td>"+r.k.join(" · ")+"</td><td>"+qDetail(r)+"</td><td>"+mTxt(r)+"</td><td>"+r.p.toLocaleString()+"원"+(r.pf?"":'<span class="tag">상단</span>')+"</td><td class=\"rfd\"><label title=\"환불 받았으면 체크\"><input type=\"checkbox\" "+(REF.has(r.n)?"checked":"")+(SKIP.has(r.n)?" disabled":"")+" onchange=\"setRf("+D.indexOf(r)+",this)\">"+f(r.r)+"</label>"+(r.re?'<span class="tag">추정</span>':"")+"</td><td>"+(r.l?f(r.l):"미정")+"</td><td>"+pct(r.o)+"</td><td>"+pct(r.c)+"</td></tr>").join("")}
+ v.map(r=>"<tr class=\""+(REF.has(r.n)?"done rf":DONE.has(r.n)?"done":SKIP.has(r.n)?"skip":"")+"\"><td class=\"cb seg\">"+[["in","참여"],["no","비참여"]].map(x=>'<span class="sg '+x[0]+((x[0]==="in"?DONE.has(r.n):SKIP.has(r.n))?" on":"")+'" onclick="setSt('+D.indexOf(r)+',\''+x[0]+'\')">'+x[1]+'</span>').join("")+"</td><td class=\"scc\">"+badge(r)+"</td><td>"+(r.cd?'<a class="sl" target="_blank" href="https://metalogos.ai/160ipo/stock/'+r.cd+'">'+r.n+'</a>':r.n)+(r.sp?'<span class="tag">스팩</span>':"")+"</td><td class=\"ds\">"+(r.d||"-")+"</td><td>"+f(r.s[0])+"~"+f(r.s[1])+"</td><td>"+bkCell(r)+"</td><td>"+qDetail(r)+"</td><td>"+mTxt(r)+"</td><td>"+r.p.toLocaleString()+"원"+(r.pf?"":'<span class="tag">상단</span>')+"</td><td class=\"rfd\"><label title=\"환불 받았으면 체크\"><input type=\"checkbox\" "+(REF.has(r.n)?"checked":"")+(SKIP.has(r.n)?" disabled":"")+" onchange=\"setRf("+D.indexOf(r)+",this)\">"+f(r.r)+"</label>"+(r.re?'<span class="tag">추정</span>':"")+"</td><td>"+(r.l?f(r.l):"미정")+"</td><td>"+pct(r.o)+"</td><td>"+pct(r.c)+"</td></tr>").join("")}
 function draw(){kpi();charts();tier();tabs();cal();tbl()}
 function go(m){M=m;draw()}function setB(k){BK=BK===k?"전체":k;draw()}
 ["fSub","fRef","fLst","fSpac","fSc"].forEach(i=>$(i).onchange=draw);$("fBrk").onchange=e=>{BK=e.target.value;draw()};
