@@ -129,7 +129,13 @@ function needOpen(r){if(OPN[r.n]||OPQ[r.n]||r.o==null||!r.l||r.l>TODAY)return;OP
  fetch(OAPI+"quote?q="+encodeURIComponent(r.n)).then(x=>x.json()).then(j=>{const L=(j.items||[]).filter(i=>/^[0-9A-Z]{6}$/.test(i.c)),it=L.find(i=>i.n===r.n)||L.find(i=>r.n.startsWith(i.n)||i.n.startsWith(r.n))||(L.length===1?L[0]:null);if(!it)return;
   return fetch(OAPI+"candle?code="+it.c+"&n=400").then(x=>x.json()).then(k=>{const d=r.l.replace(/-/g,""),c=(k.candles||[]).find(a=>a[0]===d);if(c&&c[1]>0&&Math.abs((c[1]/r.p-1)*100-r.o)<3){OPN[r.n]=c[1];try{localStorage.setItem(OPK,JSON.stringify(OPN))}catch(e){}tbl()}})}).catch(()=>{})}
 const opCell=r=>{needOpen(r);return pct(r.o)+(OPN[r.n]?'<span class="opp">'+fm(OPN[r.n])+'원</span>':"")};
-function save(){try{localStorage.setItem(SLK,JSON.stringify(SELL));localStorage.setItem(FEK,JSON.stringify(FEE));localStorage.setItem(ALK,JSON.stringify(ALC));localStorage.setItem(BKK,JSON.stringify(BRK));localStorage.setItem(DK,JSON.stringify([...DONE]));localStorage.setItem(SK,JSON.stringify([...SKIP]));localStorage.setItem(RK,JSON.stringify([...REF]))}catch(e){}}
+/* 기초리 공방 연동 (2026-10-30): 공방의 공모주 탭(iframe) 안에서 열리면 내 상태를 공방에 보내 계정에 저장(개인 알림에 씀). 공방 계정 쪽이 더 새로우면 받아서 씀. 혼자 열면 아무것도 안 함 */
+const GTK="gongmozu_ts";let GTS=0;try{GTS=+(localStorage.getItem(GTK)||0)}catch(e){}const INF=window.parent!==window;
+function gmzState(){return {done:[...DONE],skip:[...SKIP],ref:[...REF],sell:SELL,alloc:ALC,brk:BRK,fee:FEE,ts:GTS}}
+function gmzPost(k){if(!INF)return;try{parent.postMessage({gmz:k,st:gmzState()},"*")}catch(e){}}
+window.addEventListener("message",e=>{const m=e.data;if(!m||!m.gmzSet||e.source!==window.parent||!/^https:\/\/okc-stock-dashboard\.vercel\.app$|^http:\/\/localhost(:\d+)?$/.test(e.origin))return;const s=m.gmzSet;if(!(+s.ts>GTS))return;
+ DONE=new Set(s.done||[]);SKIP=new Set(s.skip||[]);REF=new Set(s.ref||[]);SELL=s.sell||{};ALC=s.alloc||{};BRK=s.brk||{};if(s.fee)FEE=s.fee;GTS=+s.ts;try{localStorage.setItem(GTK,String(GTS))}catch(e){}save(1);draw()});
+function save(q){try{localStorage.setItem(SLK,JSON.stringify(SELL));localStorage.setItem(FEK,JSON.stringify(FEE));localStorage.setItem(ALK,JSON.stringify(ALC));localStorage.setItem(BKK,JSON.stringify(BRK));localStorage.setItem(DK,JSON.stringify([...DONE]));localStorage.setItem(SK,JSON.stringify([...SKIP]));localStorage.setItem(RK,JSON.stringify([...REF]))}catch(e){}if(!q){GTS=Date.now();try{localStorage.setItem(GTK,String(GTS))}catch(e){}gmzPost("chg")}}
 const stOf=n=>REF.has(n)?"rf":DONE.has(n)?"in":SKIP.has(n)?"no":"";
 function setSt(i,k){const n=D[i].n;const cur=DONE.has(n)?"in":SKIP.has(n)?"no":"";DONE.delete(n);SKIP.delete(n);REF.delete(n);if(cur!==k){if(k==="in")DONE.add(n);else if(k==="no"){SKIP.add(n);delete BRK[n]}}save();draw()}
 function setBk(i,b,el){const n=D[i].n;let a=(BRK[n]||[]).filter(x=>x!==b);if(el.checked){a.push(b);DONE.add(n);SKIP.delete(n)}if(a.length)BRK[n]=a;else delete BRK[n];save();draw()}
@@ -214,5 +220,5 @@ function tbl(){const v=vis().filter(r=>!M||+r.s[0].slice(5,7)===M).map((r,j)=>[r
 function draw(){kpi();charts();tier();tabs();cal();tbl()}
 function go(m){M=m;draw()}function setB(k){BK=BK===k?"전체":k;draw()}
 ["fSub","fRef","fLst","fSpac","fSc"].forEach(i=>$(i).onchange=draw);$("fBrk").onchange=e=>{BK=e.target.value;draw()};
-draw();
+draw();gmzPost("hello");
 </script></body></html>
