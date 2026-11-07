@@ -190,7 +190,7 @@ function sumBox(v){feePanel();let sb=$("sumbox");if(!sb){sb=document.createEleme
  let tot=0,cnt=0,ft=0,gt=0;v.forEach(r=>{const n=netOf(r);if(n!=null){tot+=n;gt+=grossOf(r);ft+=feeOf(r).t;cnt++}});
  let at=0,ac=0;D.forEach(r=>{const n=netOf(r);if(n!=null){at+=n;ac++}});
  sb.innerHTML='<div class="sbx"><div><span>'+(M?M+"월":"연간")+' 번 돈 (수수료 뺀)</span>'+sgn(tot)+'<em>수수료 전 '+(gt>=0?"+":"")+fm(gt)+'원</em></div><div><span>낸 수수료·세금</span><b class="fz">-'+fm(ft)+'원</b></div><div><span>2026 누적 번 돈</span>'+sgn(at)+'</div><div><span>판 종목</span><b>'+cnt+'건</b><em>누적 '+ac+'건</em></div><div><span>평균 1종목</span><b>'+(cnt?fm(tot/cnt):0)+'원</b></div></div>'}
-const OPK="gongmozu_open";let OPN={};try{OPN=JSON.parse(localStorage.getItem(OPK)||"{}")||{}}catch(e){}const OPQ={};const OAPI="https://okc-stock-dashboard.vercel.app/api/";
+const OPK="gongmozu_open";let OPN={};try{OPN=JSON.parse(localStorage.getItem(OPK)||"{}")||{}}catch(e){}const OPQ={};const OAPI="https://okc-stock-dashboard.onrender.com/api/";
 function needOpen(r){if(OPN[r.n]||OPQ[r.n]||r.o==null||!r.l||r.l>TODAY)return;OPQ[r.n]=1;
  fetch(OAPI+"quote?q="+encodeURIComponent(r.n)).then(x=>x.json()).then(j=>{const L=(j.items||[]).filter(i=>/^[0-9A-Z]{6}$/.test(i.c)),it=L.find(i=>i.n===r.n)||L.find(i=>r.n.startsWith(i.n)||i.n.startsWith(r.n))||(L.length===1?L[0]:null);if(!it)return;
   return fetch(OAPI+"candle?code="+it.c+"&n=400").then(x=>x.json()).then(k=>{const d=r.l.replace(/-/g,""),c=(k.candles||[]).find(a=>a[0]===d);if(c&&c[1]>0&&Math.abs((c[1]/r.p-1)*100-r.o)<3){OPN[r.n]=c[1];try{localStorage.setItem(OPK,JSON.stringify(OPN))}catch(e){}tbl()}})}).catch(()=>{})}
@@ -199,7 +199,7 @@ const opCell=r=>{needOpen(r);return pct(r.o)+(OPN[r.n]?'<span class="opp">'+fm(O
 const GTK="gongmozu_ts";let GTS=0;try{GTS=+(localStorage.getItem(GTK)||0)}catch(e){}const INF=window.parent!==window;
 function gmzState(){return {done:[...DONE],skip:[...SKIP],ref:[...REF],sell:SELL,alloc:ALC,brk:BRK,fee:FEE,ended:[...ENDED],sellDate:SELLDATE,transfer:[...XFER],funds:FUNDS,ts:GTS}}
 function gmzPost(k){if(!INF)return;try{parent.postMessage({gmz:k,st:gmzState()},"*")}catch(e){}}
-window.addEventListener("message",e=>{const m=e.data;if(!m||!m.gmzSet||e.source!==window.parent||!/^https:\/\/okc-stock-dashboard\.vercel\.app$|^http:\/\/localhost(:\d+)?$/.test(e.origin))return;const s=m.gmzSet;if(!(+s.ts>GTS))return;
+window.addEventListener("message",e=>{const m=e.data;if(!m||!m.gmzSet||e.source!==window.parent||!/^https:\/\/okc-stock-dashboard\.(?:vercel\.app|onrender\.com)$|^http:\/\/localhost(:\d+)?$/.test(e.origin))return;const s=m.gmzSet;if(!(+s.ts>GTS))return;
  DONE=new Set(s.done||[]);SKIP=new Set(s.skip||[]);REF=new Set(s.ref||[]);SELL=s.sell||{};ALC=s.alloc||{};BRK=s.brk||{};if(s.fee)FEE=s.fee;if(Array.isArray(s.ended))ENDED=new Set(s.ended);if(s.sellDate&&typeof s.sellDate==="object")SELLDATE=s.sellDate;if(Array.isArray(s.transfer))XFER=new Set(s.transfer);if(s.funds&&typeof s.funds==="object")FUNDS=cleanFunds(s.funds);GTS=+s.ts;try{localStorage.setItem(GTK,String(GTS))}catch(e){}save(1);draw()});
 function save(q){try{localStorage.setItem(FUNDSK,JSON.stringify(FUNDS));localStorage.setItem(ENDK,JSON.stringify([...ENDED]));localStorage.setItem(SDK,JSON.stringify(SELLDATE));localStorage.setItem(XFK,JSON.stringify([...XFER]));localStorage.setItem(SLK,JSON.stringify(SELL));localStorage.setItem(FEK,JSON.stringify(FEE));localStorage.setItem(ALK,JSON.stringify(ALC));localStorage.setItem(BKK,JSON.stringify(BRK));localStorage.setItem(DK,JSON.stringify([...DONE]));localStorage.setItem(SK,JSON.stringify([...SKIP]));localStorage.setItem(RK,JSON.stringify([...REF]))}catch(e){}if(!q){GTS=Date.now();try{localStorage.setItem(GTK,String(GTS))}catch(e){}gmzPost("chg")}}
 const stOf=n=>ENDED.has(n)?"end":REF.has(n)?"rf":DONE.has(n)?"in":SKIP.has(n)?"no":"";
@@ -292,7 +292,7 @@ draw();gmzPost("hello");
 (function(){
   if(window.parent===window)return;
   var root=document.querySelector('.wrap'),pending=0,last=0;
-  function trusted(e){return e.source===window.parent&&/^https:\/\/okc-stock-dashboard\.vercel\.app$|^http:\/\/localhost(:\d+)?$/.test(e.origin);}
+  function trusted(e){return e.source===window.parent&&/^https:\/\/okc-stock-dashboard\.(?:vercel\.app|onrender\.com)$|^http:\/\/localhost(:\d+)?$/.test(e.origin);}
   function report(){pending=0;if(!root||!root.offsetWidth){last=0;return;}var h=Math.ceil(root.offsetHeight);if(h>0&&h!==last){last=h;window.parent.postMessage({gmzHeight:h},'*');}}
   function queue(){if(!pending)pending=requestAnimationFrame(report);}
   window.addEventListener('message',function(e){if(!trusted(e)||!e.data)return;if(e.data.gmzSizeRequest){last=0;queue();}if(e.data.gmzSized===true){document.documentElement.classList.add('gmz-embedded');queue();}});
